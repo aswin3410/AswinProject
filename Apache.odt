@@ -1,0 +1,13 @@
+
+#To Turn On directory listing for a particular directory.
+
+<Directory /usr/local/apache2/htdocs/listme>
+  Options +Indexes
+</Directory>
+
+
+#To Turn off directory listing.
+
+<Directory /usr/local/apache2/htdocs/dontlistme>
+  Options -Indexes
+</Directory>

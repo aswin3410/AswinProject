@@ -1,0 +1,89 @@
+OPENDKIM INSTLLATION AND SPF RECORD ADDING
+
+//install opendkim
+yum install opendkim 
+
+// create directory for domain and access permission:
+
+mkdir /etc/opendkim/keys/farshore.com 
+/usr/sbin/opendkim-genkey -D /etc/opendkim/keys/farshore.com/ -d farshore.com -s default
+chown -R root:opendkim /etc/opendkim/keys/farshore.com
+chmod 640 /etc/opendkim/keys/farshore.com/default.private
+chmod 644 /etc/opendkim/keys/farshore.com/default.txt
+
+//Listing Configuration files:
+
+/etc/opendkim.conf
+/etc/opendkim/KeyTable
+/etc/opendkim/SigningTable
+/etc/opendkim/TrustedHosts
+
+
+/etc/opendkim.conf ----> Main configuration settings.
+
+##
+## opendkim.conf -- configuration file for OpenDKIM filter
+##
+AutoRestart             Yes
+AutoRestartRate         10/1h
+Canonicalization        relaxed/simple
+ExternalIgnoreList      refile:/etc/opendkim/TrustedHosts
+InternalHosts           refile:/etc/opendkim/TrustedHosts
+KeyTable                refile:/etc/opendkim/KeyTable
+LogWhy                  Yes
+Mode                    sv
+PidFile                 /var/run/opendkim/opendkim.pid
+SignatureAlgorithm      rsa-sha256
+SigningTable            refile:/etc/opendkim/SigningTable
+Socket                  inet:8891@localhost
+Syslog                  Yes
+SyslogSuccess           Yes
+TemporaryDirectory      /var/tmp
+UMask                   022
+UserID                  opendkim:opendkim
+Domain                  farshore.com
+
+/etc/opendkim/KeyTable
+default._domainkey.farshore.com farshore.com:default:/etc/opendkim/keys/farshore.com/default
+
+/etc/opendkim/SigningTable
+*@farshore.com default._domainkey.farshore.com
+
+/etc/opendkim/TrustedHosts
+127.0.0.1
+hostname1.farshore.com
+hostname2.farshore.com
+farshore.com
+
+
+hash -r  // to avoid temp error
+
+Append in postfix conf :
+
+smtpd_milters           = inet:127.0.0.1:8891
+non_smtpd_milters       = $smtpd_milters
+milter_default_action   = accept
+milter_protocol   = 2
+
+service opendkim restart
+service postfix restart
+
+
+SPF record: ADD txt record :
+
+/etc/opendkim/keys/default.txt
+
+for SPF record in txt record
+
+@ 
+v=spf1 +a +mx +ip6:2001:4802:7801:104:a087:7ada:b232:e089 ip4:104.130.162.125 include:_spf.google.com ~all
+
+for Adding keys  in txt record:
+
+default._domainkey
+v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDHDlusQ1Uq1oeGQnpW2ZBPFKPNjs3va6pJAihqenKp/EfkNz2vFnr+x5o3OW2nDLNzucumKpSlkG7oqho1xeymSi/VcCDafhQzzjGNu2iqCwIfDrC3YsbVc6pd08NwVH41tmj4uc8pUgNCOfZzWLFQcXAzYxixL5lMZPUKjzai5wIDAQAB
+
+
+
+
+
